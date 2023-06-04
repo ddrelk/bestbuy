@@ -1,3 +1,6 @@
+from promotions import Promotion
+
+
 class Product:
     def __init__(self, name, price, quantity):
         if not name:
@@ -11,6 +14,7 @@ class Product:
         self.price = int(price)
         self.quantity = float(quantity)
         self.active = True
+        self.promotion = None
 
     def get_quantity(self):
         return float(self.quantity)
@@ -33,14 +37,27 @@ class Product:
             return False
 
     def show(self):
-        return f"{self.name}, Price: ${self.price}, Quantity: {self.quantity}"
+        promotion_info = f"Promotion: {self.promotion.name}" if self.promotion else "Promotion: None"
+        return f"{self.name}, Price: ${self.price}, Quantity: {self.quantity}, {promotion_info}"
 
     def buy(self, quantity):
         if quantity > self.quantity:
             raise ValueError("Insufficient quantity available for purchase.")
+        if self.promotion:
+            total_price = self.promotion.apply_promotion(self, quantity)
+        else:
+            total_price = self.price * quantity
         self.quantity = self.quantity - float(quantity)
-        total_price = self.price * quantity
         return total_price
+
+    def get_promotion(self):
+        return self.promotion
+
+    def set_promotion(self, promotion):
+        if isinstance(promotion, Promotion) or promotion is None:
+            self.promotion = promotion
+        else:
+            raise ValueError("Invalid promotion type. Must be an instance of Promotion or None.")
 
 
 class NonStockedProduct(Product):
@@ -48,7 +65,8 @@ class NonStockedProduct(Product):
         super().__init__(name, price, quantity=float('inf'))
 
     def show(self):
-        return f"{self.name}, Price: ${self.price}, Quantity: Unlimited"
+        promotion_info = f"Promotion: {self.promotion.name}" if self.promotion else "Promotion: None"
+        return f"{self.name}, Price: ${self.price}, Quantity: Unlimited, {promotion_info}"
 
     def get_quantity(self):
         return 0
@@ -60,7 +78,8 @@ class LimitedProduct(Product):
         self.maximum = maximum
 
     def show(self):
-        return f"{self.name}, Price: ${self.price}, Limited to 1 per order!"
+        promotion_info = f"Promotion: {self.promotion.name}" if self.promotion else "Promotion: None"
+        return f"{self.name}, Price: ${self.price}, Limited to 1 per order!, {promotion_info}"
 
     def buy(self, quantity):
         if quantity > self.maximum:
